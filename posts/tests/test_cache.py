@@ -16,8 +16,6 @@ class CacheTest(TestCase):
         cls.user = get_user_model().objects.create(username=cls.AUTH_USER)
         Post.objects.create(text='Ляляля',
                             author=cls.user)
-        # Post.objects.create(text='ПуньПунь',
-        #                     author=cls.user)
 
     def test_cache_index(self):
         self.guest_client = Client()
