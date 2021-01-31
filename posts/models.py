@@ -27,7 +27,10 @@ class Post(models.Model):
                               verbose_name='Группа',
                               help_text='Вы можете выбрать группу '
                                         'или оставить это поле пустым')
-    image = models.ImageField(upload_to='posts/', blank=True, null=True)
+    image = models.ImageField(upload_to='posts/', blank=True, null=True,
+                              verbose_name='Изображение',
+                              help_text='Вы можете прикрепить картинку '
+                                        'или оставить это поле пустым')
 
     class Meta:
         ordering = ('-pub_date',)
@@ -49,7 +52,7 @@ class Comment(models.Model):
                                    auto_now_add=True)
 
     class Meta:
-        ordering = ['-created']
+        ordering = ('-created',)
 
     def __str__(self):
         return self.text
@@ -57,8 +60,6 @@ class Comment(models.Model):
 
 class Follow(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE,
-                             blank=True,
-                             null=True,
                              related_name='follower')
     author = models.ForeignKey(User, on_delete=models.CASCADE,
                                related_name='following')

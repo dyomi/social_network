@@ -8,6 +8,7 @@ from posts.models import Follow, Post
 class FollowUserViewTest(TestCase):
     FOLLOWER_USER = 'TestName0'
     FOLLOWING_USER = 'TestName1'
+    AUTH_USER = 'TestName'
     POST_TEXT = 'Тестовый текст поста'
 
     def setUp(self):
@@ -15,20 +16,20 @@ class FollowUserViewTest(TestCase):
             username=self.FOLLOWER_USER)
         self.following_user = get_user_model().objects.create(
             username=self.FOLLOWING_USER)
+        self.user = get_user_model().objects.create(
+            username=self.AUTH_USER)
 
-        Post.objects.create(text=self.POST_TEXT,
-                            author=self.following_user
-                            )
-
-        Post.objects.create(text=f'{self.POST_TEXT} другого пользователя',
-                            author=self.follower_user
-                            )
+        self.post = Post.objects.create(text=self.POST_TEXT,
+                                        author=self.following_user)
 
         self.auth_client_follower = Client()
         self.auth_client_follower.force_login(self.follower_user)
 
         self.auth_client_author = Client()
         self.auth_client_author.force_login(self.following_user)
+
+        self.auth_client = Client()
+        self.auth_client.force_login(self.user)
 
     def test_authorized_user_follow_to_other_user(self):
         """Тестирование подписки на пользователей."""
@@ -45,6 +46,11 @@ class FollowUserViewTest(TestCase):
     def test_authorized_user_unfollow(self):
         """Тестирование отписывания от пользователей."""
         self.auth_client_follower.get(reverse(
+            'profile_follow',
+            kwargs={
+                'username': self.following_user
+            }))
+        self.auth_client_follower.get(reverse(
             'profile_unfollow',
             kwargs={
                 'username': self.following_user
@@ -56,7 +62,8 @@ class FollowUserViewTest(TestCase):
                          )
 
     def test_post_added_to_follow(self):
-        """Тестирование на правильность работы подписки на пользователя."""
+        """Тестирование появления поста у пользователя
+        подписанного на автора поста."""
 
         self.auth_client_follower.get(reverse(
             'profile_follow',
@@ -64,20 +71,22 @@ class FollowUserViewTest(TestCase):
                 'username': self.following_user
             }))
 
-        posts = Post.objects.filter(
-            author__following__user=self.follower_user)
-
         response_follower = self.auth_client_follower.get(
             reverse('follow_index'))
-        response_author = self.auth_client_author.get(
-            reverse('follow_index'))
-
-        self.assertIn(posts.get(),
+        self.assertIn(self.post,
                       response_follower.context['paginator'].object_list,
                       'Запись отсутствует на странице подписок пользователя'
                       )
 
-        self.assertNotIn(posts.get(),
-                         response_author.context['paginator'].object_list,
-                         'Запись добавлена к неверному пользователю.'
-                         )
+    def test_post_not_added_not_to_follow(self):
+        """Тестирование того, что пост не появляется у пользователя
+        не подписанного на автора поста."""
+
+        response_not_follower = self.auth_client.get(
+            reverse('follow_index'))
+
+        self.assertNotIn(
+            self.post,
+            response_not_follower.context['paginator'].object_list,
+            'Запись добавлена к неверному пользователю.'
+        )

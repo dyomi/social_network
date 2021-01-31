@@ -25,20 +25,11 @@ class CacheTest(TestCase):
 
         response1 = self.guest_client.get(reverse('index'))
 
-        cache_len = str(response0.content)
-        data_len = str(response1.content)
-
-        self.assertEqual(cache_len, data_len,
-                         'Количествозаписей переданных в context '
-                         'не совпадает с количеством записей в базе. '
+        self.assertEqual(response0.content, response1.content,
                          'Ошибка кеширования.')
 
         cache.clear()
         response2 = self.guest_client.get(reverse('index'))
 
-        context_len = str(response2.content)
-
-        self.assertNotEqual(data_len, context_len,
-                            'Количествозаписей переданных в context '
-                            'совпадает с количеством записей в базе. '
+        self.assertNotEqual(response1.content, response2.content,
                             'Ошибка кеширования.')

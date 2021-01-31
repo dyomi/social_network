@@ -11,11 +11,6 @@ from posts.models import Comment, Group, Post
 
 
 class NewPostFormTests(TestCase):
-    # AUTH_USER = 'TestName'
-    # GROUP_TITLE = 'Тестовое название группы'
-    # GROUP_SLUG = 'test-slug'
-    # GROUP_DSCRPTN = 'Тестовое описание группы'
-    # POST_TEXT = 'Тестовый текст поста'
 
     @classmethod
     def setUpClass(cls):
@@ -61,7 +56,7 @@ class NewPostFormTests(TestCase):
         form_data = {
             'group': self.group.id,
             'text': 'Тестовый текст',
-            'image': self.uploaded.name,
+            'image': self.uploaded,
         }
         response = self.authorized_user.post(
             reverse('new_post'),
@@ -74,6 +69,8 @@ class NewPostFormTests(TestCase):
         self.assertEqual(Post.objects.count(), posts_count + 1)
         # Проверяем, что создалась запись с необходимым текстом
         self.assertTrue(Post.objects.filter(text='Тестовый текст').exists())
+        # Проверяем, что создалась запись с необходимой картинкой
+        self.assertTrue(Post.objects.filter(image=f'posts/{self.uploaded.name}').exists())
 
 
 class PostEditFormTest(TestCase):
@@ -114,28 +111,52 @@ class AddCommentFormTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
         cls.guest_client = Client()
+
         cls.user = get_user_model().objects.create(username='TestName')
 
-        cls.post = Post.objects.create(text='Тестовый текст поста',
-                                       author=cls.user,
-                                       id='1')
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
 
-    def test_user_cannot_add_comment(self):
-        comments_count = Comment.objects.count()
+        cls.post = Post.objects.create(text='Тестовый текст поста',
+                                       author=cls.user)
+
+        cls.comments_count = Comment.objects.count()
+
+    def test_guest_user_cannot_add_comment(self):
         form_data = {
             'text': 'Тестовый комментарий',
         }
         response = self.guest_client.post(
             reverse(
                 'add_comment',
-                kwargs={'username': 'TestName', 'post_id': '1'}
+                kwargs={'username': 'TestName', 'post_id': self.post.id}
             ),
             data=form_data,
             follow=True
         )
+
         self.assertRedirects(
-            response,
-            '/auth/login/?next=/TestName/1/comment'
+            response, reverse('login') + '?next=' + reverse(
+                'add_comment', kwargs={'username': 'TestName',
+                                       'post_id': self.post.id}))
+        self.assertEqual(Comment.objects.count(), self.comments_count)
+
+    def test_authorized_user_can_add_comment(self):
+        form_data = {
+            'text': 'Тестовый комментарий',
+        }
+        response = self.authorized_client.post(
+            reverse(
+                'add_comment',
+                kwargs={'username': 'TestName', 'post_id': self.post.id}
+            ),
+            data=form_data,
+            follow=True
         )
-        self.assertEqual(Comment.objects.count(), comments_count)
+        self.assertRedirects(response, reverse('post',
+                                               kwargs={'username': 'TestName',
+                                                       'post_id': self.post.id}))
+        self.assertEqual(Comment.objects.count(), self.comments_count + 1)
+        self.assertTrue(Comment.objects.filter(text='Тестовый комментарий').exists())

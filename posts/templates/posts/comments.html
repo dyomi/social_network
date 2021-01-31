@@ -1,7 +1,7 @@
 <!-- Форма добавления комментария -->
 {% load user_filters %}
 
-{% if user.is_authenticated %}
+{% if user.is_authenticated and form %}
 <div class="card my-4">
     <form method="post">
         {% csrf_token %}

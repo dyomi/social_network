@@ -54,7 +54,6 @@ class PostsURLTests(TestCase):
             'posts/new.html': self.reverse_name_new_post,
             'posts/profile.html': self.reverse_name_profile,
             'posts/post.html': self.reverse_name_post,
-            'posts/post_edit.html': self.reverse_name_post_edit,
         }
 
     # Проверка вызываемых шаблонов для каждого адреса

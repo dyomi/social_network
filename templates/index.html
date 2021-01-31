@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %} Последние обновления {% endblock %}
+{% block title %}Последние обновления{% endblock %}
 {% load cache %}
 {% block content %}
 <div class="container">
@@ -11,11 +11,8 @@
     {% include "posts/post_item.html" with post=post %}
     {% endfor %}
 
-
     <!-- Вывод паджинатора -->
-    {% if page.has_other_pages %}
     {% include "paginator.html" with items=page paginator=paginator%}
-    {% endif %}
     {% endcache %}
 </div>
 {% endblock %}
