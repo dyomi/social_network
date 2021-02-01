@@ -45,11 +45,8 @@ class FollowUserViewTest(TestCase):
 
     def test_authorized_user_unfollow(self):
         """Тестирование отписывания от пользователей."""
-        self.auth_client_follower.get(reverse(
-            'profile_follow',
-            kwargs={
-                'username': self.following_user
-            }))
+        Follow.objects.create(user=self.follower_user,
+                              author=self.following_user)
         self.auth_client_follower.get(reverse(
             'profile_unfollow',
             kwargs={
