@@ -16,7 +16,6 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.conf.urls.static import static
-from django.conf.urls import handler404, handler500
 from django.urls import include, path
 
 handler404 = "posts.views.page_not_found"  # noqa
