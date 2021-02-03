@@ -80,22 +80,11 @@ def post_edit(request, username, post_id):
 def add_comment(request, username, post_id):
     post = get_object_or_404(Post, author__username=username, pk=post_id)
     form = CommentForm(request.POST or None)
-    if request.GET or not form.is_valid():
-        post = get_object_or_404(Post, author__username=username, pk=post_id)
-        comments = post.comments.select_related('author')
-
-        return render(request, 'posts/post.html', {
-            'post': post,
-            'author': post.author,
-            'form': form,
-            'comments': comments,
-        })
-
-    comment = form.save(commit=False)
-    comment.author = request.user
-    comment.post = post
-    form.save()
-
+    if request.POST and form.is_valid():
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        form.save()
     return redirect('post', username=username, post_id=post_id)
 
 
